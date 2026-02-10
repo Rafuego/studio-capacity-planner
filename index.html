@@ -8520,33 +8520,67 @@ END:VEVENT
                 const data = await response.json();
                 
                 if (data.success) {
+                    // Group tasks by project to create phases
+                    const tasksByProject = {};
+                    (data.tasks || []).forEach(task => {
+                        if (task && task.projectId) {
+                            if (!tasksByProject[task.projectId]) {
+                                tasksByProject[task.projectId] = [];
+                            }
+                            tasksByProject[task.projectId].push(task);
+                        }
+                    });
+                    
+                    // Filter valid projects
+                    const validProjects = (data.projects || []).filter(np => np && np.name);
+                    
                     // Map Notion projects to planner format
-                    const notionProjects = data.projects.map((np, index) => ({
-                        id: index + 100, // Offset IDs to avoid conflicts
-                        notionId: np.id,
-                        name: np.name,
-                        client: np.name, // Use project name as client for now
-                        clientId: null,
-                        status: np.status,
-                        type: np.type || 'other',
-                        currentPhase: 0,
-                        hoursPerWeek: 20,
-                        startDate: np.phases[0]?.start ? new Date(np.phases[0].start) : new Date(),
-                        endDate: np.phases[np.phases.length - 1]?.end ? new Date(np.phases[np.phases.length - 1].end) : new Date(),
-                        team: [], // Would need team member mapping
-                        budget: np.budget || { total: np.rate || 0, currency: 'USD', invoices: [] },
-                        notes: [],
-                        estimatedHours: 0,
-                        loggedHours: 0,
-                        phases: np.phases.length > 0 ? np.phases.map((phase, pi) => ({
-                            id: pi,
-                            notionId: phase.notionId,
-                            name: phase.name,
-                            status: phase.status,
-                            start: phase.start ? new Date(phase.start) : new Date(),
-                            end: phase.end ? new Date(phase.end) : new Date(),
-                        })) : generateDefaultPhases(new Date(), new Date(Date.now() + 30*24*60*60*1000)),
-                    }));
+                    const notionProjects = validProjects.map((np, index) => {
+                        // Get tasks for this project as phases
+                        const projectTasks = tasksByProject[np.id] || [];
+                        
+                        // Calculate start/end dates from tasks
+                        let startDate = new Date();
+                        let endDate = addDaysToDate(new Date(), 30);
+                        
+                        if (projectTasks.length > 0) {
+                            const firstTask = projectTasks[0];
+                            const lastTask = projectTasks[projectTasks.length - 1];
+                            if (firstTask && firstTask.startDate) {
+                                startDate = new Date(firstTask.startDate);
+                            }
+                            if (lastTask && lastTask.endDate) {
+                                endDate = new Date(lastTask.endDate);
+                            }
+                        }
+                        
+                        return {
+                            id: index + 100, // Offset IDs to avoid conflicts
+                            notionId: np.id,
+                            name: np.name || 'Untitled Project',
+                            client: np.name || '', // Use project name as client for now
+                            clientId: null,
+                            status: np.status || 'pipeline',
+                            type: np.type || 'other',
+                            currentPhase: 0,
+                            hoursPerWeek: 20,
+                            startDate: startDate,
+                            endDate: endDate,
+                            team: [], // Would need team member mapping
+                            budget: np.budget || { total: np.rate || 0, currency: 'USD', invoices: [] },
+                            notes: [],
+                            estimatedHours: 0,
+                            loggedHours: 0,
+                            phases: projectTasks.length > 0 ? projectTasks.map((task, ti) => ({
+                                id: ti,
+                                notionId: task.id,
+                                name: task.name || 'Untitled Phase',
+                                status: task.status === 'Done' ? 'completed' : task.status === 'In Progress' ? 'in-progress' : 'upcoming',
+                                start: task.startDate ? new Date(task.startDate) : new Date(),
+                                end: task.endDate ? new Date(task.endDate) : addDaysToDate(new Date(), 7),
+                            })) : generateDefaultPhasesForProject(startDate, endDate),
+                        };
+                    });
                     
                     // Merge with existing projects (keep local, add new from Notion)
                     const existingNotionIds = state.projects.filter(p => p.notionId).map(p => p.notionId);
@@ -8561,6 +8595,8 @@ END:VEVENT
                                     ...project,
                                     name: notionProject.name,
                                     status: notionProject.status,
+                                    startDate: notionProject.startDate,
+                                    endDate: notionProject.endDate,
                                     phases: notionProject.phases.length > 0 ? notionProject.phases : project.phases,
                                 };
                             }
