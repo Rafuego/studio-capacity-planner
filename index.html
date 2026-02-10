@@ -3193,6 +3193,11 @@
             gap: 4px;
             opacity: 0;
             transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+        
+        .client-card-actions button {
+            pointer-events: auto;
         }
 
         .client-card:hover .client-card-actions {
@@ -4450,7 +4455,7 @@
         </div>
     </div>
 
-    <!-- Add Team Member Modal -->
+    <!-- Add Team Member Modal (Legacy - for project assignment) -->
     <div class="modal-overlay" id="teamModal">
         <div class="modal">
             <div class="modal-header">
@@ -4465,11 +4470,11 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label class="form-label">Name</label>
-                    <input type="text" class="form-input" id="teamMemberName" placeholder="e.g., John Smith">
+                    <input type="text" class="form-input" id="legacyTeamName" placeholder="e.g., John Smith">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Role</label>
-                    <select class="form-input" id="teamMemberRole">
+                    <select class="form-input" id="legacyTeamRole">
                         <option value="Senior Designer">Senior Designer</option>
                         <option value="Designer">Designer</option>
                         <option value="Junior Designer">Junior Designer</option>
@@ -4479,7 +4484,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Weekly Capacity (hours)</label>
-                    <input type="number" class="form-input" id="teamMemberCapacity" value="40" min="0" max="60">
+                    <input type="number" class="form-input" id="legacyTeamCapacity" value="40" min="0" max="60">
                 </div>
             </div>
             <div class="modal-footer">
@@ -5283,6 +5288,13 @@
                 relevantProjects = state.projects.filter(p => p.team.includes(state.currentEmployeeId));
             }
             
+            // Exclude projects with archived clients
+            relevantProjects = relevantProjects.filter(p => {
+                if (!p.clientId) return true;
+                const client = state.clients.find(c => c.id === p.clientId);
+                return !client?.archived;
+            });
+            
             const activeProjects = relevantProjects.filter(p => p.status === 'active').length;
             const completedProjects = relevantProjects.filter(p => p.status === 'completed').length;
             const pipelineProjects = relevantProjects.filter(p => p.status === 'pipeline').length;
@@ -5441,6 +5453,12 @@
             state.projects.forEach(project => {
                 // Only count active projects
                 if (project.status !== 'active') return;
+                
+                // Skip projects with archived clients
+                if (project.clientId) {
+                    const client = state.clients.find(c => c.id === project.clientId);
+                    if (client?.archived) return;
+                }
                 
                 // Check if any phase is active on this date
                 const activePhases = project.phases.filter(phase => {
@@ -5670,6 +5688,13 @@
             
             // Project rows - each project gets multiple rows for phases
             let activeProjects = state.projects.filter(p => p.status === 'active' || p.status === 'pipeline');
+            
+            // Exclude projects with archived clients
+            activeProjects = activeProjects.filter(p => {
+                if (!p.clientId) return true;
+                const client = state.clients.find(c => c.id === p.clientId);
+                return !client?.archived;
+            });
             
             // For employees, only show projects they're assigned to
             if (!isAdmin() && state.currentEmployeeId) {
@@ -7041,9 +7066,9 @@
         });
 
         saveTeam.addEventListener('click', () => {
-            const name = document.getElementById('teamMemberName').value;
-            const role = document.getElementById('teamMemberRole').value;
-            const capacity = parseInt(document.getElementById('teamMemberCapacity').value);
+            const name = document.getElementById('legacyTeamName').value;
+            const role = document.getElementById('legacyTeamRole').value;
+            const capacity = parseInt(document.getElementById('legacyTeamCapacity').value);
             
             if (name) {
                 const colors = ['#7d7259', '#6b8068', '#b8956a', '#a84868', '#5c5443', '#4a5a48'];
@@ -7057,9 +7082,10 @@
                 
                 state.team.push(newMember);
                 teamModal.classList.remove('active');
-                document.getElementById('teamMemberName').value = '';
+                document.getElementById('legacyTeamName').value = '';
                 
                 if (state.currentView === 'team') renderTeam();
+                debouncedSaveToSupabase();
             }
         });
 
@@ -7346,20 +7372,20 @@
                 return `
                     <div class="client-card">
                         <div class="client-card-actions">
-                            <button class="btn-icon" onclick="event.stopPropagation(); openClientModal(${client.id})" title="Edit">
+                            <button class="btn-icon" onclick="openClientModal(${client.id})" title="Edit">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
-                            <button class="btn-icon" onclick="event.stopPropagation(); archiveClient(${client.id})" title="Archive">
+                            <button class="btn-icon" onclick="archiveClient(${client.id})" title="Archive">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="21 8 21 21 3 21 3 8"></polyline>
                                     <rect x="1" y="3" width="22" height="5"></rect>
                                     <line x1="10" y1="12" x2="14" y2="12"></line>
                                 </svg>
                             </button>
-                            <button class="btn-icon" onclick="event.stopPropagation(); deleteClient(${client.id})" title="Delete" style="color: var(--accent-red);">
+                            <button class="btn-icon" onclick="deleteClient(${client.id})" title="Delete" style="color: var(--accent-red);">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>
                                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
