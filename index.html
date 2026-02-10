@@ -4436,10 +4436,7 @@
                     <div class="form-group">
                         <label class="form-label">Assigned Team Members</label>
                         <select class="form-input" id="assignedTeam" multiple style="min-height: 100px;">
-                            <option value="1">Sarah Chen</option>
-                            <option value="2">Marcus Rivera</option>
-                            <option value="3">Emma Thompson</option>
-                            <option value="4">Alex Kim</option>
+                            <!-- Populated by JS -->
                         </select>
                     </div>
                     <div class="form-group">
@@ -4531,6 +4528,12 @@
                             <label class="form-label">Hours/Week</label>
                             <input type="number" class="form-input" id="editProjectHours" min="1" max="80">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assigned Team Members</label>
+                        <select class="form-input" id="editAssignedTeam" multiple style="min-height: 100px;">
+                            <!-- Populated by JS -->
+                        </select>
                     </div>
                 </div>
                 
@@ -6080,6 +6083,12 @@
             document.getElementById('editProjectBudget').value = project.budget?.total || '';
             document.getElementById('editProjectEstimatedHours').value = project.estimatedHours || '';
             
+            // Populate team dropdown
+            const teamSelect = document.getElementById('editAssignedTeam');
+            teamSelect.innerHTML = state.team.map(member => 
+                `<option value="${member.id}" ${project.team.includes(member.id) ? 'selected' : ''}>${member.name}</option>`
+            ).join('');
+            
             // Render phases
             renderPhasesEditor(project);
             
@@ -6372,6 +6381,10 @@
             project.client = document.getElementById('editProjectClient').value;
             project.status = document.getElementById('editProjectStatus').value;
             project.hoursPerWeek = parseInt(document.getElementById('editProjectHours').value) || 20;
+            
+            // Update team assignment
+            const teamSelect = document.getElementById('editAssignedTeam');
+            project.team = Array.from(teamSelect.selectedOptions).map(o => parseInt(o.value));
             
             // Update budget fields
             const budgetTotal = parseFloat(document.getElementById('editProjectBudget').value) || 0;
@@ -6818,14 +6831,24 @@
 
         if (mobileNewProjectBtn) {
             mobileNewProjectBtn.addEventListener('click', () => {
+                populateAddProjectTeamDropdown();
                 projectModal.classList.add('active');
             });
         }
 
         // Modal handlers
         newProjectBtn.addEventListener('click', () => {
+            populateAddProjectTeamDropdown();
             projectModal.classList.add('active');
         });
+        
+        // Populate team dropdown for add project modal
+        function populateAddProjectTeamDropdown() {
+            const teamSelect = document.getElementById('assignedTeam');
+            teamSelect.innerHTML = state.team.map(member => 
+                `<option value="${member.id}">${member.name}</option>`
+            ).join('');
+        }
 
         // New Client button handler
         const newClientBtn = document.getElementById('newClientBtn');
