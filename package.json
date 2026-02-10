@@ -1,0 +1,8 @@
+{
+  "name": "studio-capacity-planner",
+  "version": "1.0.0",
+  "description": "Studio Capacity Planner - Project and team management for Interlude Studio",
+  "scripts": {
+    "build": "echo 'Static site, no build needed'"
+  }
+}
