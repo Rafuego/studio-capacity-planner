@@ -8611,11 +8611,17 @@ END:VEVENT
                     updateNotionStatus('connected', `Synced at ${notionSettings.lastSync.toLocaleTimeString()}`);
                     logSync(`Imported ${newProjects.length} new projects, updated ${existingNotionIds.length} existing`, 'success');
                     
-                    // Save to Supabase if connected
-                    if (supabaseSettings.connected) {
-                        logSync('Saving to Supabase...', 'info');
-                        await saveToSupabase();
-                        logSync('Saved to Supabase', 'success');
+                    // Always save to Supabase if connected (idempotent sync)
+                    if (supabaseSettings.connected && supabaseSettings.apiUrl) {
+                        logSync(`Syncing ${state.projects.length} projects to Supabase...`, 'info');
+                        try {
+                            await saveToSupabase();
+                            logSync('Saved to Supabase', 'success');
+                        } catch (err) {
+                            logSync(`Supabase save error: ${err.message}`, 'error');
+                        }
+                    } else {
+                        logSync(`Supabase not connected (connected: ${supabaseSettings.connected}, url: ${supabaseSettings.apiUrl ? 'set' : 'not set'})`, 'info');
                     }
                     
                     // Refresh the view
