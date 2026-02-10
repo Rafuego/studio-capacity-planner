@@ -8611,6 +8611,13 @@ END:VEVENT
                     updateNotionStatus('connected', `Synced at ${notionSettings.lastSync.toLocaleTimeString()}`);
                     logSync(`Imported ${newProjects.length} new projects, updated ${existingNotionIds.length} existing`, 'success');
                     
+                    // Save to Supabase if connected
+                    if (supabaseSettings.connected) {
+                        logSync('Saving to Supabase...', 'info');
+                        await saveToSupabase();
+                        logSync('Saved to Supabase', 'success');
+                    }
+                    
                     // Refresh the view
                     switchView(state.currentView);
                 } else {
