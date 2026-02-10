@@ -337,6 +337,69 @@
             padding: 10px 20px;
         }
 
+        /* Employee Selector */
+        .employee-select-form {
+            padding: 20px;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-olive);
+            border-radius: 10px;
+        }
+
+        .employee-select-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .employee-select-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            width: 100%;
+        }
+
+        .employee-select-btn:hover {
+            border-color: var(--accent-olive);
+            background: var(--bg-secondary);
+        }
+
+        .employee-select-btn .employee-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .employee-select-btn .employee-info {
+            flex: 1;
+        }
+
+        .employee-select-btn .employee-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .employee-select-btn .employee-role {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
         /* Role Badge */
         .role-badge {
             display: inline-flex;
@@ -1878,6 +1941,71 @@
             background: var(--accent-red);
         }
 
+        .team-rate {
+            font-size: 12px;
+            color: var(--accent-olive);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .team-hours {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .team-card-actions {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .team-card.add-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            border-style: dashed;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .team-card.add-card:hover {
+            border-color: var(--accent-olive);
+            color: var(--accent-olive);
+            background: rgba(125, 114, 89, 0.05);
+        }
+
+        .color-picker-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .color-presets {
+            display: flex;
+            gap: 8px;
+        }
+
+        .color-preset {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .color-preset:hover {
+            transform: scale(1.1);
+            border-color: var(--text-primary);
+        }
+
         /* Projects List */
         .projects-table {
             width: 100%;
@@ -3049,11 +3177,35 @@
             border-radius: 10px;
             padding: 20px;
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .client-card:hover {
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             transform: translateY(-2px);
+        }
+
+        .client-card-actions {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .client-card:hover .client-card-actions {
+            opacity: 1;
+        }
+
+        .client-card.add-card .client-card-actions {
+            display: none;
+        }
+
+        .client-card.add-card:hover {
+            border-color: var(--accent-olive);
+            background: rgba(125, 114, 89, 0.05);
         }
 
         .client-header {
@@ -3364,6 +3516,39 @@
             color: var(--accent-red);
         }
 
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 26, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--accent-olive);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        .loading-message {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -3609,7 +3794,7 @@
                         </div>
                     </div>
                     
-                    <button class="role-card" onclick="loginAs('employee')" id="employeeRoleCard">
+                    <button class="role-card" onclick="showEmployeeSelector()" id="employeeRoleCard">
                         <div class="role-icon employee">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -3618,12 +3803,34 @@
                         </div>
                         <div class="role-info">
                             <span class="role-name">Studio Employee</span>
-                            <span class="role-desc">View projects and leave notes (read-only)</span>
+                            <span class="role-desc">View your assigned projects (read-only)</span>
                         </div>
                         <svg class="role-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M9 18l6-6-6-6"/>
                         </svg>
                     </button>
+                    
+                    <!-- Employee Selection Form -->
+                    <div class="employee-select-form" id="employeeSelectForm" style="display: none;">
+                        <div class="password-form-header">
+                            <div class="role-icon employee" style="width: 36px; height: 36px;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <span class="role-name">Who are you?</span>
+                                <span class="role-desc">Select your name to see your work</span>
+                            </div>
+                        </div>
+                        <div class="employee-select-list" id="employeeSelectList">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="password-actions" style="margin-top: 16px;">
+                            <button class="btn btn-secondary" onclick="hideEmployeeSelector()">Cancel</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -4402,6 +4609,70 @@
         </div>
     </div>
 
+    <!-- Team Member Modal -->
+    <div class="modal-overlay" id="teamMemberModal">
+        <div class="modal" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2 id="teamMemberModalTitle">Add Team Member</h2>
+                <button class="modal-close" onclick="closeTeamMemberModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" class="form-input" id="teamMemberName" placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <select class="form-input" id="teamMemberRole">
+                        <option value="Senior Designer">Senior Designer</option>
+                        <option value="Designer">Designer</option>
+                        <option value="Junior Designer">Junior Designer</option>
+                        <option value="Creative Director">Creative Director</option>
+                        <option value="Art Director">Art Director</option>
+                        <option value="Project Manager">Project Manager</option>
+                        <option value="Developer">Developer</option>
+                        <option value="Copywriter">Copywriter</option>
+                        <option value="Strategist">Strategist</option>
+                        <option value="Intern">Intern</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Weekly Capacity (hours)</label>
+                        <input type="number" class="form-input" id="teamMemberCapacity" value="40" min="1" max="60">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Hourly Rate ($)</label>
+                        <input type="number" class="form-input" id="teamMemberRate" value="100" min="0" step="5">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Avatar Color</label>
+                    <div class="color-picker-row">
+                        <input type="color" class="form-input" id="teamMemberColor" value="#7d7259" style="width: 60px; height: 40px; padding: 2px;">
+                        <div class="color-presets">
+                            <button type="button" class="color-preset" style="background: #7d7259;" onclick="document.getElementById('teamMemberColor').value='#7d7259'"></button>
+                            <button type="button" class="color-preset" style="background: #6b8068;" onclick="document.getElementById('teamMemberColor').value='#6b8068'"></button>
+                            <button type="button" class="color-preset" style="background: #b8956a;" onclick="document.getElementById('teamMemberColor').value='#b8956a'"></button>
+                            <button type="button" class="color-preset" style="background: #a84868;" onclick="document.getElementById('teamMemberColor').value='#a84868'"></button>
+                            <button type="button" class="color-preset" style="background: #5a7a9a;" onclick="document.getElementById('teamMemberColor').value='#5a7a9a'"></button>
+                            <button type="button" class="color-preset" style="background: #9a6b8a;" onclick="document.getElementById('teamMemberColor').value='#9a6b8a'"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTeamMemberModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTeamMember()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Client Modal -->
     <div class="modal-overlay" id="clientModal">
         <div class="modal" style="max-width: 500px;">
@@ -4657,6 +4928,7 @@
             currentWeek: new Date(),
             darkMode: false,
             userRole: null, // 'admin' or 'employee'
+            currentEmployeeId: null, // Team member ID for logged-in employee
             projects: generateSampleProjects(),
             archivedProjects: [],
             clients: [
@@ -4941,15 +5213,31 @@
         function renderDashboard() {
             renderCapacityBars();
             renderTeamCapacityBreakdown('week');
-            renderGantt('ganttContainer', 28);
+            
+            // Employees see only 7 days (this week), admins see 28 days
+            const ganttDays = isAdmin() ? 28 : 7;
+            renderGantt('ganttContainer', ganttDays);
+            
             updateStats();
             renderAlerts();
+            
+            // Update section title for employees
+            const ganttTitle = document.querySelector('#ganttContainer')?.closest('.gantt-section')?.querySelector('.section-title span:last-child');
+            if (ganttTitle && !isAdmin()) {
+                ganttTitle.textContent = 'Your Work This Week';
+            }
         }
 
         function updateStats() {
-            const activeProjects = state.projects.filter(p => p.status === 'active').length;
-            const completedProjects = state.projects.filter(p => p.status === 'completed').length;
-            const pipelineProjects = state.projects.filter(p => p.status === 'pipeline').length;
+            // For employees, filter to their projects only
+            let relevantProjects = state.projects;
+            if (!isAdmin() && state.currentEmployeeId) {
+                relevantProjects = state.projects.filter(p => p.team.includes(state.currentEmployeeId));
+            }
+            
+            const activeProjects = relevantProjects.filter(p => p.status === 'active').length;
+            const completedProjects = relevantProjects.filter(p => p.status === 'completed').length;
+            const pipelineProjects = relevantProjects.filter(p => p.status === 'pipeline').length;
             
             document.getElementById('activeProjectsCount').textContent = activeProjects;
             document.getElementById('completedProjectsCount').textContent = completedProjects;
@@ -4957,7 +5245,22 @@
             // Update active projects subtitle
             const activeSubtitle = document.getElementById('newProjectsThisMonth');
             if (activeSubtitle) {
-                activeSubtitle.textContent = `${pipelineProjects} in pipeline`;
+                if (isAdmin()) {
+                    activeSubtitle.textContent = `${pipelineProjects} in pipeline`;
+                } else {
+                    activeSubtitle.textContent = `${pipelineProjects} upcoming`;
+                }
+            }
+            
+            // Update stat card labels for employees
+            const activeLabel = document.querySelector('#activeProjectsCount')?.closest('.stat-card')?.querySelector('.stat-label');
+            const completedLabel = document.querySelector('#completedProjectsCount')?.closest('.stat-card')?.querySelector('.stat-label');
+            if (!isAdmin()) {
+                if (activeLabel) activeLabel.textContent = 'Your Active Projects';
+                if (completedLabel) completedLabel.textContent = 'Your Completed';
+            } else {
+                if (activeLabel) activeLabel.textContent = 'Active Projects';
+                if (completedLabel) completedLabel.textContent = 'Completed';
             }
             
             // Calculate average capacity for current week
@@ -5318,7 +5621,29 @@
             html += '</div>';
             
             // Project rows - each project gets multiple rows for phases
-            const activeProjects = state.projects.filter(p => p.status === 'active' || p.status === 'pipeline');
+            let activeProjects = state.projects.filter(p => p.status === 'active' || p.status === 'pipeline');
+            
+            // For employees, only show projects they're assigned to
+            if (!isAdmin() && state.currentEmployeeId) {
+                activeProjects = activeProjects.filter(p => p.team.includes(state.currentEmployeeId));
+            }
+            
+            // Show message if no projects for employee
+            if (activeProjects.length === 0 && !isAdmin()) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 16px; opacity: 0.5;">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">No projects assigned</div>
+                        <div style="font-size: 13px;">You don't have any active projects this period.</div>
+                    </div>
+                `;
+                return;
+            }
             
             activeProjects.forEach(project => {
                 const teamMembers = project.team.map(id => state.team.find(t => t.id === id)).filter(Boolean);
@@ -5440,7 +5765,9 @@
 
         // Render Timeline (full view)
         function renderTimeline() {
-            renderGantt('fullGanttContainer', 90);
+            // Employees see only 30 days (current month), admins see 90 days
+            const days = isAdmin() ? 90 : 30;
+            renderGantt('fullGanttContainer', days);
         }
 
         // Current project filter state
@@ -5781,8 +6108,15 @@
         function deleteInvoice(index) {
             const project = state.projects.find(p => p.id === editingProjectId);
             if (project && project.budget?.invoices) {
-                project.budget.invoices.splice(index, 1);
-                renderInvoicesEditor(project);
+                const invoice = project.budget.invoices[index];
+                const invoiceName = invoice?.name || `Invoice ${index + 1}`;
+                
+                if (confirm(`Delete "${invoiceName}"?`)) {
+                    if (confirm(`Final confirmation: Permanently delete "${invoiceName}"?`)) {
+                        project.budget.invoices.splice(index, 1);
+                        renderInvoicesEditor(project);
+                    }
+                }
             }
         }
 
@@ -5891,21 +6225,24 @@
                 return;
             }
             
-            if (confirm(`Are you sure you want to delete "${phase.name}"?`)) {
-                project.phases.splice(index, 1);
-                
-                // Renumber phases
-                project.phases.forEach((p, i) => p.id = i);
-                
-                // Update current phase if needed
-                if (project.currentPhase >= project.phases.length) {
-                    project.currentPhase = project.phases.length - 1;
+            if (confirm(`Delete phase "${phase.name}"?`)) {
+                // Second confirmation
+                if (confirm(`Final confirmation: Permanently delete "${phase.name}"?`)) {
+                    project.phases.splice(index, 1);
+                    
+                    // Renumber phases
+                    project.phases.forEach((p, i) => p.id = i);
+                    
+                    // Update current phase if needed
+                    if (project.currentPhase >= project.phases.length) {
+                        project.currentPhase = project.phases.length - 1;
+                    }
+                    
+                    // Update project end date
+                    project.endDate = new Date(project.phases[project.phases.length - 1].end);
+                    
+                    renderPhasesEditor(project);
                 }
-                
-                // Update project end date
-                project.endDate = new Date(project.phases[project.phases.length - 1].end);
-                
-                renderPhasesEditor(project);
             }
         }
 
@@ -6006,8 +6343,9 @@
         // Render Team
         function renderTeam() {
             const container = document.getElementById('teamGrid');
+            const adminUser = isAdmin();
             
-            container.innerHTML = state.team.map(member => {
+            const teamHtml = state.team.map(member => {
                 // Calculate utilization
                 const assignedHours = state.projects
                     .filter(p => p.status === 'active' && p.team.includes(member.id))
@@ -6016,6 +6354,27 @@
                 const statusClass = utilization < 60 ? 'available' : utilization < 85 ? 'busy' : 'full';
                 const statusText = utilization < 60 ? 'Available' : utilization < 85 ? 'Busy' : 'At Capacity';
                 
+                const adminControls = adminUser ? `
+                    <div class="team-card-actions">
+                        <button class="btn-icon" onclick="event.stopPropagation(); openTeamMemberModal(${member.id})" title="Edit">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn-icon" onclick="event.stopPropagation(); deleteTeamMember(${member.id})" title="Remove" style="color: var(--accent-red);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                ` : '';
+                
+                const rateInfo = adminUser ? `
+                    <div class="team-rate">${formatCurrency(member.rate || 0)}/hr</div>
+                ` : '';
+                
                 return `
                     <div class="team-card">
                         <div class="team-avatar" style="background: ${member.color}">
@@ -6023,13 +6382,131 @@
                         </div>
                         <div class="team-name">${member.name}</div>
                         <div class="team-role">${member.role}</div>
+                        ${rateInfo}
                         <div class="team-capacity">
                             <span class="team-capacity-dot ${statusClass}"></span>
                             ${statusText} (${utilization}%)
                         </div>
+                        <div class="team-hours">${member.capacity}h / week</div>
+                        ${adminControls}
                     </div>
                 `;
             }).join('');
+            
+            // Add "Add Team Member" card for admins
+            const addCard = adminUser ? `
+                <div class="team-card add-card" onclick="openTeamMemberModal()">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <div style="font-size: 14px; margin-top: 8px;">Add Team Member</div>
+                </div>
+            ` : '';
+            
+            container.innerHTML = teamHtml + addCard;
+        }
+        
+        // Team Member Modal Functions
+        let editingTeamMemberId = null;
+        
+        function openTeamMemberModal(memberId = null) {
+            editingTeamMemberId = memberId;
+            
+            const modal = document.getElementById('teamMemberModal');
+            const title = document.getElementById('teamMemberModalTitle');
+            
+            if (memberId) {
+                const member = state.team.find(m => m.id === memberId);
+                title.textContent = 'Edit Team Member';
+                document.getElementById('teamMemberName').value = member.name;
+                document.getElementById('teamMemberRole').value = member.role;
+                document.getElementById('teamMemberCapacity').value = member.capacity;
+                document.getElementById('teamMemberRate').value = member.rate || 0;
+                document.getElementById('teamMemberColor').value = member.color;
+            } else {
+                title.textContent = 'Add Team Member';
+                document.getElementById('teamMemberName').value = '';
+                document.getElementById('teamMemberRole').value = 'Designer';
+                document.getElementById('teamMemberCapacity').value = 40;
+                document.getElementById('teamMemberRate').value = 100;
+                document.getElementById('teamMemberColor').value = '#7d7259';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        function closeTeamMemberModal() {
+            document.getElementById('teamMemberModal').classList.remove('active');
+            editingTeamMemberId = null;
+        }
+        
+        function saveTeamMember() {
+            const name = document.getElementById('teamMemberName').value.trim();
+            const role = document.getElementById('teamMemberRole').value.trim();
+            const capacity = parseInt(document.getElementById('teamMemberCapacity').value) || 40;
+            const rate = parseFloat(document.getElementById('teamMemberRate').value) || 0;
+            const color = document.getElementById('teamMemberColor').value;
+            
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+            
+            if (editingTeamMemberId) {
+                // Update existing member
+                const member = state.team.find(m => m.id === editingTeamMemberId);
+                if (member) {
+                    member.name = name;
+                    member.role = role;
+                    member.capacity = capacity;
+                    member.rate = rate;
+                    member.color = color;
+                }
+            } else {
+                // Add new member
+                const newId = Math.max(...state.team.map(m => m.id), 0) + 1;
+                state.team.push({
+                    id: newId,
+                    name: name,
+                    role: role,
+                    capacity: capacity,
+                    rate: rate,
+                    color: color
+                });
+            }
+            
+            closeTeamMemberModal();
+            renderTeam();
+        }
+        
+        function deleteTeamMember(memberId) {
+            const member = state.team.find(m => m.id === memberId);
+            if (!member) return;
+            
+            // Check if member is assigned to any projects
+            const assignedProjects = state.projects.filter(p => p.team.includes(memberId));
+            
+            let confirmMsg = `Are you sure you want to remove ${member.name}?`;
+            if (assignedProjects.length > 0) {
+                confirmMsg += `\n\nThey are assigned to ${assignedProjects.length} project(s). They will be removed from those projects.`;
+            }
+            
+            if (confirm(confirmMsg)) {
+                // Second confirmation
+                if (confirm(`Final confirmation: Permanently delete ${member.name}? This cannot be undone.`)) {
+                    // Remove from team
+                    state.team = state.team.filter(m => m.id !== memberId);
+                    
+                    // Remove from projects
+                    state.projects.forEach(p => {
+                        p.team = p.team.filter(id => id !== memberId);
+                    });
+                    
+                    renderTeam();
+                    showSyncToast('Team member deleted', 'success');
+                }
+            }
         }
 
         // Render Settings
@@ -6110,10 +6587,17 @@
 
         function deletePhase(index) {
             if (editingPhases.length <= 1) return;
-            editingPhases.splice(index, 1);
-            // Re-index phases
-            editingPhases.forEach((p, i) => p.id = i);
-            renderPhaseEditor();
+            
+            const phaseName = editingPhases[index]?.name || `Phase ${index + 1}`;
+            
+            if (confirm(`Delete "${phaseName}"?`)) {
+                if (confirm(`Final confirmation: Permanently delete "${phaseName}"?`)) {
+                    editingPhases.splice(index, 1);
+                    // Re-index phases
+                    editingPhases.forEach((p, i) => p.id = i);
+                    renderPhaseEditor();
+                }
+            }
         }
 
         function addNewPhase() {
@@ -6797,15 +7281,39 @@
         function renderClients() {
             const grid = document.getElementById('clientsGrid');
             
-            const clientsHtml = state.clients.map(client => {
+            // Filter out archived clients unless showing archived
+            const visibleClients = state.clients.filter(c => !c.archived);
+            
+            const clientsHtml = visibleClients.map(client => {
                 const clientProjects = state.projects.filter(p => p.clientId === client.id);
                 const activeProjects = clientProjects.filter(p => p.status === 'active').length;
                 const totalRevenue = clientProjects.reduce((sum, p) => sum + (p.budget?.total || 0), 0);
                 const initials = client.name.split(' ').map(w => w[0]).join('').slice(0, 2);
                 
                 return `
-                    <div class="client-card" onclick="openClientDetail(${client.id})">
-                        <div class="client-header">
+                    <div class="client-card">
+                        <div class="client-card-actions">
+                            <button class="btn-icon" onclick="event.stopPropagation(); openClientModal(${client.id})" title="Edit">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="event.stopPropagation(); archiveClient(${client.id})" title="Archive">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                                    <rect x="1" y="3" width="22" height="5"></rect>
+                                    <line x1="10" y1="12" x2="14" y2="12"></line>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" onclick="event.stopPropagation(); deleteClient(${client.id})" title="Delete" style="color: var(--accent-red);">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="client-header" onclick="openClientDetail(${client.id})">
                             <div class="client-avatar">${initials}</div>
                             <div class="client-info">
                                 <h3>${client.name}</h3>
@@ -6834,8 +7342,20 @@
                 `;
             }).join('');
             
-            grid.innerHTML = clientsHtml + `
-                <div class="client-card" style="display: flex; align-items: center; justify-content: center; min-height: 200px; border-style: dashed; cursor: pointer;" onclick="openClientModal()">
+            // Check if there are archived clients
+            const archivedClients = state.clients.filter(c => c.archived);
+            const archivedBtn = archivedClients.length > 0 ? `
+                <button class="btn btn-secondary" style="margin-bottom: 16px;" onclick="showArchivedClients()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px;">
+                        <polyline points="21 8 21 21 3 21 3 8"></polyline>
+                        <rect x="1" y="3" width="22" height="5"></rect>
+                    </svg>
+                    View Archived (${archivedClients.length})
+                </button>
+            ` : '';
+            
+            grid.innerHTML = archivedBtn + clientsHtml + `
+                <div class="client-card add-card" style="display: flex; align-items: center; justify-content: center; min-height: 200px; border-style: dashed; cursor: pointer;" onclick="openClientModal()">
                     <div style="text-align: center; color: var(--text-muted);">
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px;">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -6845,6 +7365,118 @@
                     </div>
                 </div>
             `;
+        }
+        
+        // Archive a client
+        function archiveClient(clientId) {
+            const client = state.clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            const clientProjects = state.projects.filter(p => p.clientId === clientId);
+            const activeProjects = clientProjects.filter(p => p.status === 'active');
+            
+            let confirmMsg = `Archive "${client.name}"?`;
+            if (activeProjects.length > 0) {
+                confirmMsg += `\n\nThis client has ${activeProjects.length} active project(s). The client will be hidden but their projects will remain.`;
+            }
+            
+            if (confirm(confirmMsg)) {
+                client.archived = true;
+                renderClients();
+                showSyncToast('Client archived', 'success');
+            }
+        }
+        
+        // Delete a client
+        function deleteClient(clientId) {
+            const client = state.clients.find(c => c.id === clientId);
+            if (!client) return;
+            
+            const clientProjects = state.projects.filter(p => p.clientId === clientId);
+            
+            let confirmMsg = `Permanently delete "${client.name}"?`;
+            if (clientProjects.length > 0) {
+                confirmMsg += `\n\nThis client has ${clientProjects.length} project(s). Those projects will be unlinked from this client but not deleted.`;
+            }
+            
+            if (confirm(confirmMsg)) {
+                // Second confirmation
+                if (confirm(`Final confirmation: Permanently delete "${client.name}"? This cannot be undone.`)) {
+                    // Unlink projects from this client
+                    state.projects.forEach(p => {
+                        if (p.clientId === clientId) {
+                            p.clientId = null;
+                        }
+                    });
+                    
+                    // Remove client
+                    state.clients = state.clients.filter(c => c.id !== clientId);
+                    document.getElementById('archivedClientsModal')?.remove();
+                    renderClients();
+                    showSyncToast('Client deleted', 'success');
+                }
+            }
+        }
+        
+        // Show archived clients modal
+        function showArchivedClients() {
+            const archivedClients = state.clients.filter(c => c.archived);
+            
+            const listHtml = archivedClients.map(client => {
+                const initials = client.name.split(' ').map(w => w[0]).join('').slice(0, 2);
+                return `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px; margin-bottom: 8px;">
+                        <div class="client-avatar" style="width: 40px; height: 40px; font-size: 14px;">${initials}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${client.name}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);">${client.contact || 'No contact'}</div>
+                        </div>
+                        <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="restoreClient(${client.id})">Restore</button>
+                        <button class="btn-icon" onclick="deleteClient(${client.id})" title="Delete permanently" style="color: var(--accent-red);">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            // Create a simple modal for archived clients
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'archivedClientsModal';
+            modal.innerHTML = `
+                <div class="modal" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2>Archived Clients</h2>
+                        <button class="modal-close" onclick="document.getElementById('archivedClientsModal').remove()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+                        ${listHtml || '<p style="color: var(--text-muted); text-align: center;">No archived clients</p>'}
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('archivedClientsModal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // Restore archived client
+        function restoreClient(clientId) {
+            const client = state.clients.find(c => c.id === clientId);
+            if (client) {
+                client.archived = false;
+                document.getElementById('archivedClientsModal')?.remove();
+                renderClients();
+                showSyncToast('Client restored', 'success');
+            }
         }
         
         function openClientModal(clientId = null) {
@@ -7009,9 +7641,16 @@
         }
         
         function deleteArchivedProject(projectId) {
-            if (confirm('Permanently delete this project? This cannot be undone.')) {
-                state.archivedProjects = state.archivedProjects.filter(p => p.id !== projectId);
-                renderArchive();
+            const project = state.archivedProjects.find(p => p.id === projectId);
+            const projectName = project?.name || 'this project';
+            
+            if (confirm(`Permanently delete "${projectName}"?`)) {
+                // Second confirmation
+                if (confirm(`Final confirmation: Permanently delete "${projectName}"? This cannot be undone.`)) {
+                    state.archivedProjects = state.archivedProjects.filter(p => p.id !== projectId);
+                    renderArchive();
+                    showSyncToast('Project deleted', 'success');
+                }
             }
         }
         
@@ -7236,12 +7875,55 @@ END:VEVENT
             }
         }
         
+        // Show employee selector
+        function showEmployeeSelector() {
+            document.getElementById('employeeRoleCard').style.display = 'none';
+            document.getElementById('employeeSelectForm').style.display = 'block';
+            
+            // Populate employee list
+            const listEl = document.getElementById('employeeSelectList');
+            listEl.innerHTML = state.team.map(member => `
+                <button class="employee-select-btn" onclick="loginAsEmployee(${member.id})">
+                    <div class="employee-avatar" style="background: ${member.color}">
+                        ${member.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div class="employee-info">
+                        <div class="employee-name">${member.name}</div>
+                        <div class="employee-role">${member.role}</div>
+                    </div>
+                </button>
+            `).join('');
+        }
+        
+        // Hide employee selector
+        function hideEmployeeSelector() {
+            document.getElementById('employeeRoleCard').style.display = 'flex';
+            document.getElementById('employeeSelectForm').style.display = 'none';
+        }
+        
+        // Login as specific employee
+        function loginAsEmployee(teamMemberId) {
+            state.currentEmployeeId = teamMemberId;
+            localStorage.setItem('currentEmployeeId', teamMemberId);
+            loginAs('employee');
+        }
+        
         // Login as a specific role
         function loginAs(role, save = true) {
             state.userRole = role;
             
             if (save) {
                 localStorage.setItem('userRole', role);
+            }
+            
+            // For employees, restore their ID
+            if (role === 'employee') {
+                const savedEmployeeId = localStorage.getItem('currentEmployeeId');
+                if (savedEmployeeId) {
+                    state.currentEmployeeId = parseInt(savedEmployeeId);
+                }
+            } else {
+                state.currentEmployeeId = null;
             }
             
             // Update body class for CSS role-based styling
@@ -7321,16 +8003,22 @@ END:VEVENT
             }
             
             badge.className = `role-badge ${role}`;
-            badge.innerHTML = role === 'admin' 
-                ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            
+            if (role === 'admin') {
+                badge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                      <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
                    </svg>
-                   Admin`
-                : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                   Admin`;
+            } else {
+                // Show employee name
+                const employee = state.team.find(m => m.id === state.currentEmployeeId);
+                const displayName = employee ? employee.name.split(' ')[0] : 'Employee';
+                badge.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                      <circle cx="12" cy="7" r="4"/>
                    </svg>
-                   Employee`;
+                   ${displayName}`;
+            }
         }
         
         // Show role switcher (click on badge)
@@ -7675,6 +8363,9 @@ END:VEVENT
             const syncBtn = document.getElementById('notionSyncBtn');
             if (syncBtn) syncBtn.classList.add('syncing');
             
+            // Show loading overlay
+            showLoadingOverlay('Syncing with Notion...');
+            
             try {
                 const response = await fetch(`${apiUrl}/api/notion/sync`);
                 const data = await response.json();
@@ -7698,6 +8389,33 @@ END:VEVENT
                 // Silently fail - user can manually sync later
             } finally {
                 if (syncBtn) syncBtn.classList.remove('syncing');
+                hideLoadingOverlay();
+            }
+        }
+        
+        // Loading overlay functions
+        function showLoadingOverlay(message = 'Loading...') {
+            let overlay = document.getElementById('loadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.innerHTML = `
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-message">${message}</div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+            } else {
+                overlay.querySelector('.loading-message').textContent = message;
+                overlay.style.display = 'flex';
+            }
+        }
+        
+        function hideLoadingOverlay() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
             }
         }
         
@@ -7714,23 +8432,43 @@ END:VEVENT
                 }
             });
             
+            // Extract unique client names from projects and create/update clients
+            const clientNames = [...new Set(notionProjects.map(np => np.name))];
+            
+            // Create clients from Notion project names (replace sample clients)
+            const notionClients = clientNames.map((name, index) => ({
+                id: index + 1,
+                name: name,
+                contact: '',
+                email: '',
+                phone: '',
+                industry: '',
+                notes: 'Imported from Notion'
+            }));
+            
+            // Replace clients with Notion-derived clients
+            if (notionClients.length > 0) {
+                state.clients = notionClients;
+            }
+            
             // Transform Notion projects to planner format
             const transformedProjects = notionProjects.map((np, index) => {
                 const projectTasks = tasksByProject[np.id] || [];
+                const client = state.clients.find(c => c.name === np.name);
                 
                 return {
                     id: index + 1,
                     notionId: np.id,
                     name: np.name,
                     client: np.name,
-                    clientId: null,
+                    clientId: client?.id || null,
                     status: np.status || 'pipeline',
                     type: np.type || 'other',
                     currentPhase: 0,
                     hoursPerWeek: 20,
                     startDate: projectTasks[0]?.startDate ? new Date(projectTasks[0].startDate) : new Date(),
                     endDate: projectTasks[projectTasks.length - 1]?.endDate ? new Date(projectTasks[projectTasks.length - 1].endDate) : addDaysToDate(new Date(), 30),
-                    team: np.accountOwner?.map((p, i) => i + 1) || [],
+                    team: [], // Team members assigned manually by admin
                     budget: np.budget || { total: np.rate || 0, currency: 'USD', invoices: [] },
                     notes: [],
                     estimatedHours: 0,
