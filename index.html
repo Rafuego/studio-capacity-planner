@@ -8742,10 +8742,13 @@ END:VEVENT
         
         // Merge Notion data into state
         function mergeNotionData(notionProjects, notionTasks) {
+            // Filter out invalid projects
+            const validProjects = (notionProjects || []).filter(np => np && np.name);
+            
             // Group tasks by project
             const tasksByProject = {};
-            notionTasks.forEach(task => {
-                if (task.projectId) {
+            (notionTasks || []).forEach(task => {
+                if (task && task.projectId) {
                     if (!tasksByProject[task.projectId]) {
                         tasksByProject[task.projectId] = [];
                     }
@@ -8754,7 +8757,7 @@ END:VEVENT
             });
             
             // Extract unique client names from projects and create/update clients
-            const clientNames = [...new Set(notionProjects.map(np => np.name))];
+            const clientNames = [...new Set(validProjects.map(np => np.name).filter(Boolean))];
             
             // Create clients from Notion project names (replace sample clients)
             const notionClients = clientNames.map((name, index) => ({
@@ -8773,22 +8776,37 @@ END:VEVENT
             }
             
             // Transform Notion projects to planner format
-            const transformedProjects = notionProjects.map((np, index) => {
+            const transformedProjects = validProjects.map((np, index) => {
                 const projectTasks = tasksByProject[np.id] || [];
                 const client = state.clients.find(c => c.name === np.name);
+                
+                // Safely get start/end dates from tasks
+                let startDate = new Date();
+                let endDate = addDaysToDate(new Date(), 30);
+                
+                if (projectTasks.length > 0) {
+                    const firstTask = projectTasks[0];
+                    const lastTask = projectTasks[projectTasks.length - 1];
+                    if (firstTask && firstTask.startDate) {
+                        startDate = new Date(firstTask.startDate);
+                    }
+                    if (lastTask && lastTask.endDate) {
+                        endDate = new Date(lastTask.endDate);
+                    }
+                }
                 
                 return {
                     id: index + 1,
                     notionId: np.id,
-                    name: np.name,
-                    client: np.name,
+                    name: np.name || 'Untitled Project',
+                    client: np.name || '',
                     clientId: client?.id || null,
                     status: np.status || 'pipeline',
                     type: np.type || 'other',
                     currentPhase: 0,
                     hoursPerWeek: 20,
-                    startDate: projectTasks[0]?.startDate ? new Date(projectTasks[0].startDate) : new Date(),
-                    endDate: projectTasks[projectTasks.length - 1]?.endDate ? new Date(projectTasks[projectTasks.length - 1].endDate) : addDaysToDate(new Date(), 30),
+                    startDate: startDate,
+                    endDate: endDate,
                     team: [], // Team members assigned manually by admin
                     budget: np.budget || { total: np.rate || 0, currency: 'USD', invoices: [] },
                     notes: [],
@@ -8797,11 +8815,11 @@ END:VEVENT
                     phases: projectTasks.length > 0 ? projectTasks.map((task, ti) => ({
                         id: ti,
                         notionId: task.notionId || task.id,
-                        name: task.name,
+                        name: task.name || 'Untitled Phase',
                         status: task.status === 'Done' ? 'completed' : task.status === 'In Progress' ? 'in-progress' : 'upcoming',
                         start: task.startDate ? new Date(task.startDate) : new Date(),
                         end: task.endDate ? new Date(task.endDate) : addDaysToDate(new Date(), 7),
-                    })) : generateDefaultPhasesForProject(new Date(), addDaysToDate(new Date(), 30)),
+                    })) : generateDefaultPhasesForProject(startDate, endDate),
                 };
             });
             
