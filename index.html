@@ -4842,7 +4842,7 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M4 4v5h.582m0 0a8.001 8.001 0 0115.356 2M4.582 9H9"></path>
                         </svg>
-                        Pull from Notion
+                        Import from Notion
                     </button>
                     <button class="btn btn-secondary" onclick="syncToNotion()" id="pushToNotionBtn" disabled>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -8505,60 +8505,120 @@ END:VEVENT
         // Pull data from Notion
         async function syncFromNotion() {
             if (!notionSettings.apiUrl) {
-                logSync('No API URL configured', 'error');
+                logSync('No Notion API URL configured', 'error');
                 return;
             }
             
-            updateNotionStatus('syncing', 'Pulling from Notion...');
-            logSync('Starting sync from Notion...');
+            // Check Supabase connection - required for import
+            if (!supabaseSettings.apiUrl) {
+                logSync('Supabase not configured. Please connect to Supabase first in Cloud Storage settings.', 'error');
+                alert('Please connect to Supabase first (Settings → Cloud Storage) before importing from Notion.');
+                return;
+            }
+            
+            // Ensure Supabase is connected
+            if (!supabaseSettings.connected) {
+                logSync('Reconnecting to Supabase...', 'info');
+                try {
+                    await loadFromSupabase();
+                    supabaseSettings.connected = true;
+                    updateSupabaseStatus();
+                    logSync('Supabase reconnected', 'success');
+                } catch (err) {
+                    logSync(`Failed to connect to Supabase: ${err.message}`, 'error');
+                    return;
+                }
+            }
+            
+            updateNotionStatus('syncing', 'Importing from Notion...');
+            logSync('Starting import from Notion...', 'info');
             
             const syncBtn = document.getElementById('notionSyncBtn');
             syncBtn.classList.add('syncing');
             
             try {
+                // Step 1: Fetch from Notion
                 const response = await fetch(`${notionSettings.apiUrl}/api/notion/sync`);
                 const data = await response.json();
                 
-                if (data.success) {
-                    // Group tasks by project to create phases
-                    const tasksByProject = {};
-                    (data.tasks || []).forEach(task => {
-                        if (task && task.projectId) {
-                            if (!tasksByProject[task.projectId]) {
-                                tasksByProject[task.projectId] = [];
-                            }
-                            tasksByProject[task.projectId].push(task);
+                if (!data.success) {
+                    throw new Error(data.error || 'Notion fetch failed');
+                }
+                
+                logSync(`Fetched ${data.projects?.length || 0} projects and ${data.tasks?.length || 0} tasks from Notion`, 'info');
+                
+                // Step 2: Group tasks by project to create phases
+                const tasksByProject = {};
+                (data.tasks || []).forEach(task => {
+                    if (task && task.projectId) {
+                        if (!tasksByProject[task.projectId]) {
+                            tasksByProject[task.projectId] = [];
                         }
-                    });
+                        tasksByProject[task.projectId].push(task);
+                    }
+                });
+                
+                // Step 3: Transform Notion projects
+                const validProjects = (data.projects || []).filter(np => np && np.name);
+                const existingNotionIds = new Set(state.projects.filter(p => p.notionId).map(p => p.notionId));
+                
+                let importedCount = 0;
+                let updatedCount = 0;
+                
+                // Find the max existing ID to avoid conflicts
+                const maxExistingId = Math.max(0, ...state.projects.map(p => p.id || 0));
+                let nextId = maxExistingId + 1;
+                
+                for (const np of validProjects) {
+                    const projectTasks = tasksByProject[np.id] || [];
                     
-                    // Filter valid projects
-                    const validProjects = (data.projects || []).filter(np => np && np.name);
+                    // Calculate dates from tasks
+                    let startDate = new Date();
+                    let endDate = addDaysToDate(new Date(), 30);
                     
-                    // Map Notion projects to planner format
-                    const notionProjects = validProjects.map((np, index) => {
-                        // Get tasks for this project as phases
-                        const projectTasks = tasksByProject[np.id] || [];
-                        
-                        // Calculate start/end dates from tasks
-                        let startDate = new Date();
-                        let endDate = addDaysToDate(new Date(), 30);
-                        
-                        if (projectTasks.length > 0) {
-                            const firstTask = projectTasks[0];
-                            const lastTask = projectTasks[projectTasks.length - 1];
-                            if (firstTask && firstTask.startDate) {
-                                startDate = new Date(firstTask.startDate);
+                    if (projectTasks.length > 0) {
+                        const firstTask = projectTasks[0];
+                        const lastTask = projectTasks[projectTasks.length - 1];
+                        if (firstTask?.startDate) startDate = new Date(firstTask.startDate);
+                        if (lastTask?.endDate) endDate = new Date(lastTask.endDate);
+                    }
+                    
+                    // Build phases from tasks
+                    const phases = projectTasks.length > 0 
+                        ? projectTasks.map((task, ti) => ({
+                            id: ti,
+                            notionId: task.id,
+                            name: task.name || 'Untitled Phase',
+                            status: task.status === 'Done' ? 'completed' : task.status === 'In Progress' ? 'in-progress' : 'upcoming',
+                            start: task.startDate ? new Date(task.startDate) : new Date(),
+                            end: task.endDate ? new Date(task.endDate) : addDaysToDate(new Date(), 7),
+                        }))
+                        : generateDefaultPhasesForProject(startDate, endDate);
+                    
+                    if (existingNotionIds.has(np.id)) {
+                        // Update existing project - preserve local customizations (team, budget, etc)
+                        state.projects = state.projects.map(project => {
+                            if (project.notionId === np.id) {
+                                updatedCount++;
+                                return {
+                                    ...project, // Keep local data (team, budget, notes, etc)
+                                    name: np.name || project.name,
+                                    status: np.status || project.status,
+                                    // Only update dates/phases if they have meaningful data from Notion
+                                    startDate: projectTasks.length > 0 ? startDate : project.startDate,
+                                    endDate: projectTasks.length > 0 ? endDate : project.endDate,
+                                    phases: projectTasks.length > 0 ? phases : project.phases,
+                                };
                             }
-                            if (lastTask && lastTask.endDate) {
-                                endDate = new Date(lastTask.endDate);
-                            }
-                        }
-                        
-                        return {
-                            id: index + 100, // Offset IDs to avoid conflicts
+                            return project;
+                        });
+                    } else {
+                        // New project - add it
+                        const newProject = {
+                            id: nextId++,
                             notionId: np.id,
                             name: np.name || 'Untitled Project',
-                            client: np.name || '', // Use project name as client for now
+                            client: '', // User assigns client manually
                             clientId: null,
                             status: np.status || 'pipeline',
                             type: np.type || 'other',
@@ -8566,71 +8626,40 @@ END:VEVENT
                             hoursPerWeek: 20,
                             startDate: startDate,
                             endDate: endDate,
-                            team: [], // Would need team member mapping
-                            budget: np.budget || { total: np.rate || 0, currency: 'USD', invoices: [] },
+                            team: [],
+                            budget: { total: np.rate || 0, currency: 'USD', invoices: [] },
                             notes: [],
                             estimatedHours: 0,
                             loggedHours: 0,
-                            phases: projectTasks.length > 0 ? projectTasks.map((task, ti) => ({
-                                id: ti,
-                                notionId: task.id,
-                                name: task.name || 'Untitled Phase',
-                                status: task.status === 'Done' ? 'completed' : task.status === 'In Progress' ? 'in-progress' : 'upcoming',
-                                start: task.startDate ? new Date(task.startDate) : new Date(),
-                                end: task.endDate ? new Date(task.endDate) : addDaysToDate(new Date(), 7),
-                            })) : generateDefaultPhasesForProject(startDate, endDate),
+                            phases: phases,
                         };
-                    });
-                    
-                    // Merge with existing projects (keep local, add new from Notion)
-                    const existingNotionIds = state.projects.filter(p => p.notionId).map(p => p.notionId);
-                    const newProjects = notionProjects.filter(np => !existingNotionIds.includes(np.notionId));
-                    
-                    // Update existing Notion-linked projects
-                    state.projects = state.projects.map(project => {
-                        if (project.notionId) {
-                            const notionProject = notionProjects.find(np => np.notionId === project.notionId);
-                            if (notionProject) {
-                                return {
-                                    ...project,
-                                    name: notionProject.name,
-                                    status: notionProject.status,
-                                    startDate: notionProject.startDate,
-                                    endDate: notionProject.endDate,
-                                    phases: notionProject.phases.length > 0 ? notionProject.phases : project.phases,
-                                };
-                            }
-                        }
-                        return project;
-                    });
-                    
-                    // Add new projects
-                    state.projects = [...state.projects, ...newProjects];
-                    
-                    notionSettings.lastSync = new Date();
-                    updateNotionStatus('connected', `Synced at ${notionSettings.lastSync.toLocaleTimeString()}`);
-                    logSync(`Imported ${newProjects.length} new projects, updated ${existingNotionIds.length} existing`, 'success');
-                    
-                    // Always save to Supabase if connected (idempotent sync)
-                    if (supabaseSettings.connected && supabaseSettings.apiUrl) {
-                        logSync(`Syncing ${state.projects.length} projects to Supabase...`, 'info');
-                        try {
-                            await saveToSupabase();
-                            logSync('Saved to Supabase', 'success');
-                        } catch (err) {
-                            logSync(`Supabase save error: ${err.message}`, 'error');
-                        }
-                    } else {
-                        logSync(`Supabase not connected (connected: ${supabaseSettings.connected}, url: ${supabaseSettings.apiUrl ? 'set' : 'not set'})`, 'info');
+                        state.projects.push(newProject);
+                        importedCount++;
                     }
-                    
-                    // Refresh the view
-                    switchView(state.currentView);
-                } else {
-                    throw new Error(data.error || 'Sync failed');
                 }
+                
+                logSync(`Processed: ${importedCount} new, ${updatedCount} updated`, 'info');
+                
+                // Step 4: Save everything to Supabase (source of truth)
+                logSync(`Saving ${state.projects.length} projects to Supabase...`, 'info');
+                try {
+                    await saveToSupabase();
+                    logSync('Saved to Supabase ✓', 'success');
+                } catch (err) {
+                    logSync(`Supabase save failed: ${err.message}`, 'error');
+                    throw err;
+                }
+                
+                // Step 5: Update UI
+                notionSettings.lastSync = new Date();
+                updateNotionStatus('connected', `Imported at ${notionSettings.lastSync.toLocaleTimeString()}`);
+                logSync(`Import complete: ${importedCount} new projects added, ${updatedCount} existing updated`, 'success');
+                
+                // Refresh the view
+                switchView(state.currentView);
+                
             } catch (error) {
-                updateNotionStatus('error', 'Sync failed');
+                updateNotionStatus('error', 'Import failed');
                 logSync(`Error: ${error.message}`, 'error');
             } finally {
                 syncBtn.classList.remove('syncing');
